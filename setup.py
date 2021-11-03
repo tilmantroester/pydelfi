@@ -10,10 +10,9 @@ setup(name='pydelfi',
       url='https://github.com/justinalsing/pydelfi',
       packages=find_packages(),
       install_requires=[
-	  "jupyter",
           "getdist>=1.1.0",
           "emcee>=3.0.2",
           "tqdm>=4.41.1",
-          "tensorflow-probability==0.11.0",
-          "tensorflow==2.4.1"
+          "tensorflow-probability",
+          "tensorflow"
       ])

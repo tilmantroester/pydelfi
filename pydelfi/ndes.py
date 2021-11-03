@@ -17,7 +17,7 @@ __version__ = "v0.2"
 __author__ = "Justin Alsing, Tom Charnock and Stephen Feeney"
 
 class NDE():
-    def __init__(self, model, prior, optimiser=tf.keras.optimizers.Adam(lr=1e-4), optimiser_arguments=None, dtype=tf.float32, **kwargs):
+    def __init__(self, model, prior, optimiser=tf.keras.optimizers.Adam(learning_rate=1e-4), optimiser_arguments=None, dtype=tf.float32, **kwargs):
         self.dtype = dtype
         if self.dtype == tf.float32:
             self.itype = tf.int32
@@ -42,6 +42,15 @@ class NDE():
             self.optimiser = optimiser(optimiser_arguments)
         else:
             self.optimiser = optimiser
+        
+        self.nb = self.isnotebook()
+        if self.nb:
+            try:
+                import tqdm.notebook
+                tqdm.notebook.tqdm()
+            except ImportError:
+                self.nb = False
+
         super(NDE, self).__init__(**kwargs)
 
     @tf.function
@@ -137,8 +146,8 @@ class NDE():
 
         # Progress bar, if desired
         if progress_bar:
-            if self.isnotebook():
-                pbar = tqdm.tnrange(epochs, desc="Training")
+            if self.nb:
+                pbar = tqdm.notebook.trange(epochs, desc="Training")
             else:
                 pbar = tqdm.trange(epochs, desc="Training")
             pbar.set_postfix(ordered_dict={"train loss":0, "val loss":0}, refresh=True)
@@ -426,9 +435,9 @@ def ConditionalMaskedAutoregressiveFlow(
              for i in range(n_mades)]
     bijector = tfb.Chain(MADEs)
     distribution = tfd.TransformedDistribution(
-        distribution=tfd.Normal(loc=0., scale=1.),
+        distribution=tfd.Sample(tfd.Normal(loc=0., scale=1.), sample_shape=[n_data]),
         bijector=bijector,
-        event_shape=[n_data])
+        )
     put_conditional = lambda conditional : dict(
         zip(["MADE_{}".format(i) for i in range(n_mades)], 
             [{"conditional_input": tf.convert_to_tensor(conditional, dtype=tf.float32)} for i in range(n_mades)]))

@@ -318,7 +318,11 @@ class Delfi():
         #    return -1e100
         #else:
         #    return lnP
-        return self.NDEs.weighted_log_prob((self.data - self.data_shift)/self.data_scale, conditional=(theta - self.theta_shift)/self.theta_scale ) + self.prior.log_prob(theta)
+        # print(self.data.dtype, self.data_shift.dtype, self.data_scale.dtype, theta.dtype, self.theta_shift.dtype, self.theta_scale.dtype)
+        wlogprob = self.NDEs.weighted_log_prob((self.data - self.data_shift)/self.data_scale, conditional=(theta - self.theta_shift)/self.theta_scale )
+        p = self.prior.log_prob(theta)
+        # print(wlogprob.dtype, p.dtype)
+        return wlogprob + p
 
     # weighted log posterior
     def log_proposal(self, theta):
@@ -370,7 +374,7 @@ class Delfi():
 
         # Set up default x0
         if x0 is None:
-            x0 = self.posterior_samples[np.random.choice(np.arange(len(self.posterior_samples)), p=self.posterior_weights.astype(np.float32)/sum(self.posterior_weights), replace=False, size=2*self.nwalkers),:]
+            x0 = self.posterior_samples[np.random.choice(np.arange(len(self.posterior_samples)), p=self.posterior_weights.astype(np.float32)/sum(self.posterior_weights), replace=False, size=2*self.nwalkers),:].astype(np.float32)
 
         # run chain
         chain = affine.sample(log_target, self.npar, self.nwalkers, burn_in_chain + main_chain, x0[0:self.nwalkers,:], x0[self.nwalkers:,:])
